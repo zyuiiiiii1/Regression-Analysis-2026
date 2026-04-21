@@ -4,15 +4,19 @@ from pathlib import Path
 import shutil
 
 
-def evaluate_model(model, X_train, y_train, X_test, y_test, model_name: str) -> str:
+def evaluate_model(model, X_train, y_train, X_test, y_test, model_name: str) -> dict:
     """通用评价函数（支持 CustomOLS 和 sklearn 模型）"""
     start_time = time.perf_counter()
     model.fit(X_train, y_train)
     fit_time = time.perf_counter() - start_time
-    r2_score = model.score(X_test, y_test)
-    result_str = f"| {model_name} | {fit_time:.5f} sec | {r2_score:.4f} |\n"
-    return result_str
+    y_pred = model.predict(X_test)
+    
+    # 计算 R² 和 RMSE
+    r2_score = 1 - np.sum((y_test - y_pred) ** 2) / np.sum((y_test - np.mean(y_test)) ** 2)
+    rmse = np.sqrt(np.mean((y_test - y_pred) ** 2))
 
+    # 返回评估结果
+    return {"r2": r2_score, "rmse": rmse}
 
 def setup_results_dir() -> Path:
     """自动化管理 results 文件夹（存在则清空，不存在则创建）"""
